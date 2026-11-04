@@ -2,6 +2,97 @@
 title: "Census Maps"
 ---
 
-This is a Quarto website.
+## Sarasota County population by age
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
+Each dot represents about 100 residents and is placed within its census tract.
+Dots show estimated population counts, not individual people's locations.
+
+```{r}
+#| echo: false
+#| message: false
+
+library(tidycensus)
+
+library(dplyr)
+library(leaflet)
+
+sarasota_tract_age <- get_acs(
+  geography = "tract",
+  state = "FL",
+  county = "Sarasota",
+  table = "B01001",
+  year = 2024,
+  geometry = TRUE
+)
+
+age_groups <- c(
+  "Under 18", "18-24", "25-34", "35-44",
+  "45-54", "55-64", "65+"
+)
+
+sarasota_tract_age <- sarasota_tract_age |>
+  mutate(
+    age_group = case_when(
+      variable %in% paste0("B01001_", sprintf("%03d", c(3:6, 27:30))) ~ "Under 18",
+      variable %in% paste0("B01001_", sprintf("%03d", c(7:10, 31:34))) ~ "18-24",
+      variable %in% paste0("B01001_", sprintf("%03d", c(11:12, 35:36))) ~ "25-34",
+      variable %in% paste0("B01001_", sprintf("%03d", c(13:14, 37:38))) ~ "35-44",
+      variable %in% paste0("B01001_", sprintf("%03d", c(15:16, 39:40))) ~ "45-54",
+      variable %in% paste0("B01001_", sprintf("%03d", c(17:19, 41:43))) ~ "55-64",
+      variable %in% paste0("B01001_", sprintf("%03d", c(20:25, 44:49))) ~ "65+"
+    )
+  ) |>
+  filter(!is.na(age_group)) |>
+  group_by(GEOID, NAME, age_group) |>
+  summarize(estimate = sum(estimate), .groups = "drop") |>
+  mutate(dot_count = floor(estimate / 100)) |>
+  filter(dot_count > 0) |>
+  sf::st_transform(26917)
+
+sarasota_outline <- sarasota_tract_age |>
+  distinct(GEOID, .keep_all = TRUE) |>
+  sf::st_geometry() |>
+  sf::st_union() |>
+  sf::st_sfc(crs = 26917) |>
+  sf::st_transform(4326) |>
+  sf::st_sf()
+
+set.seed(123)
+dot_geometry <- do.call(
+  c,
+  lapply(seq_len(nrow(sarasota_tract_age)), \(i) {
+    sf::st_sample(
+      sarasota_tract_age$geometry[i],
+      size = sarasota_tract_age$dot_count[i]
+    )
+  })
+)
+
+age_dots <- sf::st_sf(
+  age_group = rep(sarasota_tract_age$age_group, sarasota_tract_age$dot_count),
+  geometry = dot_geometry
+) |>
+  sf::st_transform(4326)
+
+age_colors <- colorFactor(
+  palette = c("#6A3D9A", "#1F78B4", "#33A02C", "#FF7F00", "#E31A1C", "#A65628", "#666666"),
+  domain = age_groups
+)
+
+leaflet() |>
+  addPolygons(
+    data = sarasota_outline,
+    fill = FALSE,
+    color = "#444444",
+    weight = 2
+  ) |>
+  addCircleMarkers(
+    data = age_dots,
+    color = ~age_colors(age_group),
+    fillOpacity = 0.75,
+    radius = 3,
+    stroke = FALSE,
+    label = ~age_group
+  ) |>
+  addLegend("bottomright", pal = age_colors, values = age_groups, title = "Age group")
+```
