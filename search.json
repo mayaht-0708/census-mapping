@@ -4,7 +4,14 @@
     "href": "index.html",
     "title": "Census Maps",
     "section": "",
-    "text": "This is a Quarto website.\nTo learn more about Quarto websites visit https://quarto.org/docs/websites."
+    "text": "Each dot represents about 100 residents and is placed within its census tract. Dots show estimated population counts, not individual people’s locations."
+  },
+  {
+    "objectID": "index.html#sarasota-county-population-by-age",
+    "href": "index.html#sarasota-county-population-by-age",
+    "title": "Census Maps",
+    "section": "",
+    "text": "Each dot represents about 100 residents and is placed within its census tract. Dots show estimated population counts, not individual people’s locations."
   },
   {
     "objectID": "about.html",
