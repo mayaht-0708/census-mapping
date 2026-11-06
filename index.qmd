@@ -2,97 +2,139 @@
 title: "Census Maps"
 ---
 
-## Sarasota County population by age
+Explore how Florida's county populations changed over the decade. The map and
+chart below compare population growth from 2010 to 2020.
 
-Each dot represents about 100 residents and is placed within its census tract.
-Dots show estimated population counts, not individual people's locations.
+## Florida county population growth, 2010–2020
+
+::: {.map-instructions}
+**Interactive map:** Hover over a county to see its population growth, 2020
+population, median age, and median household income. County colors show
+population growth from 2010 to 2020.
+:::
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(tidycensus)
+library(dplyr)
+library(leaflet)
+library(ggplot2)
+
+population_2010 <- get_decennial(
+  geography = "county",
+  state = "FL",
+  variables = "P001001",
+  year = 2010
+) |>
+  transmute(GEOID, population_2010 = value)
+
+population_2020 <- get_decennial(
+  geography = "county",
+  state = "FL",
+  variables = "P1_001N",
+  year = 2020,
+  geometry = TRUE
+) |>
+  transmute(GEOID, NAME, population_2020 = value, geometry)
+
+county_details <- get_acs(
+  geography = "county",
+  state = "FL",
+  variables = c(
+    median_age = "B01002_001",
+    median_income = "B19013_001"
+  ),
+  year = 2020
+) |>
+select(GEOID, variable, estimate) |>
+tidyr::pivot_wider(names_from = variable, values_from = estimate)
+
+county_map <- population_2020 |>
+  left_join(population_2010, by = "GEOID") |>
+  left_join(county_details, by = "GEOID") |>
+  mutate(
+    growth_pct = (population_2020 / population_2010 - 1) * 100,
+    hover_text = paste0(
+      NAME,
+      " | Growth: ", round(growth_pct, 1), "%",
+      " | 2020 population: ", format(population_2020, big.mark = ","),
+      " | Median age: ", round(median_age, 1),
+      " | Median household income: $", format(median_income, big.mark = ",", scientific = FALSE)
+    )
+  )
+
+growth_colors <- colorNumeric(
+  palette = "YlOrRd",
+  domain = county_map$growth_pct
+)
+
+leaflet(county_map) |>
+  addPolygons(
+    fillColor = ~growth_colors(growth_pct),
+    fillOpacity = 0.8,
+    color = "white",
+    weight = 1,
+    label = ~hover_text,
+    highlightOptions = highlightOptions(
+      weight = 2,
+      color = "#333333",
+      bringToFront = TRUE
+    )
+  ) |>
+  addLegend(
+    pal = growth_colors,
+    values = ~growth_pct,
+    title = "Population growth (%)",
+    position = "bottomright"
+  )
+```
+
+## Top 5 fastest-growing counties
 
 ```{r}
 #| echo: false
 #| message: false
 
-library(tidycensus)
-
-library(dplyr)
-library(leaflet)
-
-sarasota_tract_age <- get_acs(
-  geography = "tract",
-  state = "FL",
-  county = "Sarasota",
-  table = "B01001",
-  year = 2024,
-  geometry = TRUE
-)
-
-age_groups <- c(
-  "Under 18", "18-24", "25-34", "35-44",
-  "45-54", "55-64", "65+"
-)
-
-sarasota_tract_age <- sarasota_tract_age |>
-  mutate(
-    age_group = case_when(
-      variable %in% paste0("B01001_", sprintf("%03d", c(3:6, 27:30))) ~ "Under 18",
-      variable %in% paste0("B01001_", sprintf("%03d", c(7:10, 31:34))) ~ "18-24",
-      variable %in% paste0("B01001_", sprintf("%03d", c(11:12, 35:36))) ~ "25-34",
-      variable %in% paste0("B01001_", sprintf("%03d", c(13:14, 37:38))) ~ "35-44",
-      variable %in% paste0("B01001_", sprintf("%03d", c(15:16, 39:40))) ~ "45-54",
-      variable %in% paste0("B01001_", sprintf("%03d", c(17:19, 41:43))) ~ "55-64",
-      variable %in% paste0("B01001_", sprintf("%03d", c(20:25, 44:49))) ~ "65+"
-    )
-  ) |>
-  filter(!is.na(age_group)) |>
-  group_by(GEOID, NAME, age_group) |>
-  summarize(estimate = sum(estimate), .groups = "drop") |>
-  mutate(dot_count = floor(estimate / 100)) |>
-  filter(dot_count > 0) |>
-  sf::st_transform(26917)
-
-sarasota_outline <- sarasota_tract_age |>
-  distinct(GEOID, .keep_all = TRUE) |>
-  sf::st_geometry() |>
-  sf::st_union() |>
-  sf::st_sfc(crs = 26917) |>
-  sf::st_transform(4326) |>
-  sf::st_sf()
-
-set.seed(123)
-dot_geometry <- do.call(
-  c,
-  lapply(seq_len(nrow(sarasota_tract_age)), \(i) {
-    sf::st_sample(
-      sarasota_tract_age$geometry[i],
-      size = sarasota_tract_age$dot_count[i]
-    )
-  })
-)
-
-age_dots <- sf::st_sf(
-  age_group = rep(sarasota_tract_age$age_group, sarasota_tract_age$dot_count),
-  geometry = dot_geometry
-) |>
-  sf::st_transform(4326)
-
-age_colors <- colorFactor(
-  palette = c("#6A3D9A", "#1F78B4", "#33A02C", "#FF7F00", "#E31A1C", "#A65628", "#666666"),
-  domain = age_groups
-)
-
-leaflet() |>
-  addPolygons(
-    data = sarasota_outline,
-    fill = FALSE,
-    color = "#444444",
-    weight = 2
-  ) |>
-  addCircleMarkers(
-    data = age_dots,
-    color = ~age_colors(age_group),
-    fillOpacity = 0.75,
-    radius = 3,
-    stroke = FALSE,
-    label = ~age_group
-  ) |>
-  addLegend("bottomright", pal = age_colors, values = age_groups, title = "Age group")
+county_map |>
+  slice_max(growth_pct, n = 5, with_ties = FALSE) |>
+  ggplot(aes(x = reorder(NAME, growth_pct), y = growth_pct)) +
+  geom_col(fill = "#e76f51") +
+  coord_flip() +
+  labs(
+    x = NULL,
+    y = "Population growth (%)",
+    title = "Florida counties with the greatest population growth",
+    subtitle = "2010–2020"
+  ) +
+  theme_minimal()
 ```
+
+## Top 2 counties with the least growth
+
+```{r}
+#| echo: false
+#| message: false
+#| fig-width: 7
+#| fig-height: 3.5
+
+county_map |>
+  slice_min(growth_pct, n = 2, with_ties = FALSE) |>
+  ggplot(aes(x = reorder(NAME, growth_pct), y = growth_pct)) +
+  geom_col(fill = "#457b9d") +
+  coord_flip() +
+  labs(
+    x = NULL,
+    y = "Population growth (%)",
+    title = "Florida counties with the least population growth",
+    subtitle = "2010–2020"
+  ) +
+  theme_minimal()
+```
+
+::: {.data-note}
+**Data:** Population counts are from the 2010 and 2020 decennial Censuses.
+Median age and median household income are 2020 ACS 5-year estimates.
+:::
