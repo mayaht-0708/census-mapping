@@ -1,1 +1,65 @@
 /* css styles */
+body {
+  background-color: #f5f8fc;
+  color: #263445;
+}
+
+.navbar {
+  box-shadow: 0 2px 10px rgb(26 54 80 / 10%);
+}
+
+#title-block-header .title {
+  color: #163d5a;
+  font-weight: 700;
+}
+
+#quarto-document-content {
+  max-width: 1050px;
+}
+
+#quarto-document-content h2 {
+  margin-top: 2rem;
+  padding-bottom: 0.55rem;
+  color: #163d5a;
+  border-bottom: 2px solid #dce8f2;
+}
+
+.leaflet-container {
+  background-color: #dff2ff;
+  border: 1px solid #c8dceb;
+  border-radius: 0.75rem;
+  box-shadow: 0 5px 18px rgb(26 54 80 / 10%);
+}
+
+.map-instructions {
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  background-color: #e8f4ff;
+  border-left: 5px solid #1976a5;
+  border-radius: 0.5rem;
+  font-size: 1.05rem;
+}
+
+.cell-output-display {
+  margin: 1rem 0 1.75rem;
+  padding: 0.75rem;
+  background: #fff;
+  border: 1px solid #e1e9f0;
+  border-radius: 0.75rem;
+  box-shadow: 0 5px 18px rgb(26 54 80 / 8%);
+}
+
+.cell-output-display img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.4rem;
+}
+
+.data-note {
+  margin-top: 1.5rem;
+  padding: 0.85rem 1rem;
+  color: #526477;
+  background: #edf2f7;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}

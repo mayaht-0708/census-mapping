@@ -4,14 +4,21 @@
     "href": "index.html",
     "title": "Census Maps",
     "section": "",
-    "text": "Each dot represents about 100 residents and is placed within its census tract. Dots show estimated population counts, not individual people’s locations."
+    "text": "Explore how Florida’s county populations changed over the decade. The map and chart below compare population growth from 2010 to 2020."
   },
   {
-    "objectID": "index.html#sarasota-county-population-by-age",
-    "href": "index.html#sarasota-county-population-by-age",
+    "objectID": "index.html#florida-county-population-growth-20102020",
+    "href": "index.html#florida-county-population-growth-20102020",
     "title": "Census Maps",
-    "section": "",
-    "text": "Each dot represents about 100 residents and is placed within its census tract. Dots show estimated population counts, not individual people’s locations."
+    "section": "Florida county population growth, 2010–2020",
+    "text": "Florida county population growth, 2010–2020\n\nInteractive map: Hover over a county to see its population growth, 2020 population, median age, and median household income. County colors show population growth from 2010 to 2020."
+  },
+  {
+    "objectID": "index.html#top-5-fastest-growing-counties",
+    "href": "index.html#top-5-fastest-growing-counties",
+    "title": "Census Maps",
+    "section": "Top 5 fastest-growing counties",
+    "text": "Top 5 fastest-growing counties\n\n\n\n\n\n\n\n\n\n\nData: Population counts are from the 2010 and 2020 decennial Censuses. Median age and median household income are 2020 ACS 5-year estimates."
   },
   {
     "objectID": "about.html",
